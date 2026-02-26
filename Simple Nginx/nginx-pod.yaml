@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: my-nginx-pod
+  labels:
+    app: webserver
+spec:
+  containers:
+  - name: nginx-container
+    image: nginx:latest
+    command: ["/bin/sh", "-c", "echo 'Starting up...'; sleep 5; echo 'Something went wrong!'; ls /folder-that-does-not-exist"]
+    ports:
+    - containerPort: 80
+  restartPolicy: Always
