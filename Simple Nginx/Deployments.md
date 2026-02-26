@@ -82,7 +82,7 @@ You can do this by editing your YAML and running apply, or you can do it directl
 
 *Bash*  
 `kubectl set image deployment/nginx-deployment nginx-container=nginx:1.25.1 --record`  
-What to watch for in your -w terminal:
+**What to watch for in your -w terminal:**  
 
 - A new pod starts up (Pending -> Running).
 - Once the new one is healthy, an old one starts Terminating.
