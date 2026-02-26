@@ -147,18 +147,20 @@ The status will change to ImagePullBackOff or ErrImagePull.
 
 ### The Fix:  
 
-- Run `kubectl describe pod my-nginx-pod.`
+- Run `kubectl describe pod my-nginx-pod.`  
 - Look at the Events at the bottom.
-`Events:`
-`  Type     Reason   Age                 From     Message`
-`  ----     ------   ----                ----     -------`
-`  Normal   Killing  2m8s                kubelet  spec.containers{nginx-container}: Container nginx-container definition changed, will be restarted`
-`  Normal   Pulling  79s (x3 over 2m7s)  kubelet  spec.containers{nginx-container}: Pulling image "nginx:99999999"`   
-`  Warning  Failed   78s (x3 over 2m7s)  kubelet  spec.containers{nginx-container}: Failed to pull image "nginx:99999999": Error response from daemon: failed to resolve reference "docker.io/library/nginx:99999999": docker.io/library/nginx:99999999: not found`
-`  Warning  Failed   78s (x3 over 2m7s)  kubelet  spec.containers{nginx-container}: Error: ErrImagePull`
-`  Normal   BackOff  39s (x3 over 2m6s)  kubelet  spec.containers{nginx-container}: Back-off pulling image "nginx:99999999"`
-`  Warning  Failed   39s (x3 over 2m6s)  kubelet  spec.containers{nginx-container}: Error: ImagePullBackOff`
-`  Warning  BackOff  1s (x6 over 91s)    kubelet  spec.containers{nginx-container}: Back-off restarting failed container nginx-container in pod my-nginx-pod_default(50877003-93d1-4428-b9c9-a449c1d77e71)`
+```
+Events:
+  Type     Reason   Age                 From     Message
+  ----     ------   ----                ----     -------
+  Normal   Killing  2m8s                kubelet  spec.containers{nginx-container}: Container nginx-container definition changed, will be restarted
+  Normal   Pulling  79s (x3 over 2m7s)  kubelet  spec.containers{nginx-container}: Pulling image "nginx:99999999"
+  Warning  Failed   78s (x3 over 2m7s)  kubelet  spec.containers{nginx-container}: Failed to pull image "nginx:99999999": Error response from daemon: failed to resolve reference "docker.io/library/nginx:99999999": docker.io/library/nginx:99999999: not found
+  Warning  Failed   78s (x3 over 2m7s)  kubelet  spec.containers{nginx-container}: Error: ErrImagePull
+  Normal   BackOff  39s (x3 over 2m6s)  kubelet  spec.containers{nginx-container}: Back-off pulling image "nginx:99999999"
+  Warning  Failed   39s (x3 over 2m6s)  kubelet  spec.containers{nginx-container}: Error: ImagePullBackOff
+  Warning  BackOff  1s (x6 over 91s)    kubelet  spec.containers{nginx-container}: Back-off restarting failed container nginx-container in pod my-nginx-pod_default(50877003-93d1-4428-b9c9-a449c1d77e71)
+```
 - It will say Failed to pull image... repository does not exist.
 - Check your spelling or ensure you are logged into your registry (like AWS ECR).
 
@@ -169,53 +171,56 @@ The code is right, the image is there, but the application inside the container 
 We'll give NGINX a command that makes no sense. Add a command block that tries to run a file that doesn't exist:
 
 *YAML*
-`spec:`
-`  containers:`
-`  - name: nginx-container`
-`    image: nginx:latest`
-`    command: ["/bin/sh", "-c", "exit 1"] # Forces the app to crash immediately`
+```
+spec:
+  containers:
+  - name: nginx-container
+    image: nginx:latest
+    command: ["/bin/sh", "-c", "exit 1"] # Forces the app to crash immediately
+```
 ### The Test:
 
-*Bash*
-`kubectl replace --force -f nginx-pod.yaml`
-`kubectl get pods`
+*Bash*  
+`kubectl replace --force -f nginx-pod.yaml`  
+`kubectl get pods`  
 ### The Error:
 - CrashLoopBackOff. This is the most famous error in Kubernetes. It means the container started, crashed, and Kubernetes is waiting (backing off) before trying again.
-`NAME           READY   STATUS             RESTARTS     AGE`
-`my-nginx-pod   0/1     CrashLoopBackOff   1 (5s ago)   9s`
-`my-nginx-pod   0/1     Error              2 (16s ago)   20s`
-`my-nginx-pod   0/1     CrashLoopBackOff   2 (16s ago)   36s`
-`my-nginx-pod   0/1     Error              3 (30s ago)   50s`
-`my-nginx-pod   0/1     CrashLoopBackOff   3 (12s ago)   61s`
-`my-nginx-pod   0/1     Error              4 (54s ago)   103s`
-
+```
+NAME           READY   STATUS             RESTARTS     AGE
+my-nginx-pod   0/1     CrashLoopBackOff   1 (5s ago)   9s
+my-nginx-pod   0/1     Error              2 (16s ago)   20s
+my-nginx-pod   0/1     CrashLoopBackOff   2 (16s ago)   36s
+my-nginx-pod   0/1     Error              3 (30s ago)   50s
+my-nginx-pod   0/1     CrashLoopBackOff   3 (12s ago)   61s
+my-nginx-pod   0/1     Error              4 (54s ago)   103s
+```
 ### The Fix:
 You need to see the `"stdout"` of the container.
 
-*Bash*
-`kubectl logs my-nginx-pod`
+*Bash*  
+`kubectl logs my-nginx-pod`  
 - This is how you see your Python or Nginx error logs to figure out why the code itself is failing.
 - You should see nothing
-- You’ve just discovered the "Silent Failure." ### Why the logs were empty
+- You’ve just discovered the "Silent Failure." (Why the logs were empty)
 - The `kubectl logs` command shows you the STDOUT (Standard Output) and STDERR (Standard Error) of the process inside the container.
 - Your command was `exit 1`.
 - That tells the shell to quit with an error code, but it doesn't tell it to say anything.
 - Because the process didn't print "I am crashing!" to the screen before it died, the Kubelet has nothing to report back to you.
 
 **How to make the failure "Talk"**
-- If you want to see how a real application error looks, let's change the command to something that actually complains. Update your YAML to this:
+- If you want to see how a real application error looks, let's change the command to something that actually complains. Update the YAML to this:
 
-*YAML*
-`command: ["/bin/sh", "-c", "echo 'Starting up...'; sleep 5; echo 'Something went wrong!'; ls /folder-that-does-not-exist"]`
-- Run the "Nuke and Pave" again:
+*YAML*  
+`command: ["/bin/sh", "-c", "echo 'Starting up...'; sleep 5; echo 'Something went wrong!'; ls /folder-that-does-not-exist"]`  
+- Run the replace command again:
 
-*Bash*
-`kubectl replace --force -f nginx-pod.yaml`
+*Bash*  
+`kubectl replace --force -f nginx-pod.yaml`  
 Now check the logs:
 
-*Bash*
-kubectl logs my-nginx-pod
-You should see your custom messages followed by a real error from the Linux system saying the directory doesn't exist.
-`Starting up...`
-`Something went wrong!`
-`ls: cannot access '/folder-that-does-not-exist': No such file or directory`
+*Bash*  
+`kubectl logs my-nginx-pod`  
+You should see your custom messages followed by a real error from the Linux system saying the directory doesn't exist.  
+`Starting up...`  
+`Something went wrong!`  
+`ls: cannot access '/folder-that-does-not-exist': No such file or directory`  
