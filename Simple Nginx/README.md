@@ -218,9 +218,9 @@ You need to see the `"stdout"` of the container.
 `kubectl replace --force -f nginx-pod.yaml`  
 Now check the logs:
 
-*Bash*  
-`kubectl logs my-nginx-pod`  
-You should see your custom messages followed by a real error from the Linux system saying the directory doesn't exist.  
-`Starting up...`  
-`Something went wrong!`  
-`ls: cannot access '/folder-that-does-not-exist': No such file or directory`  
+*Bash*
+kubectl logs my-nginx-pod
+You should see your custom messages followed by a real error from the Linux system saying the directory doesn't exist.
+`Starting up...`
+`Something went wrong!`
+`ls: cannot access '/folder-that-does-not-exist': No such file or directory`
