@@ -1,19 +1,19 @@
 # Day 4 — Services & Networking Basics
-***Tasks:***
--Learn Service types: ClusterIP, NodePort, LoadBalancer
--Understand: kube-proxy role and basic CNI concept
-***Lab:***
--Expose your NGINX Deployment via ClusterIP → NodePort
--Test connectivity using curl inside cluster (kubectl exec)
--Try to break the service and debug
-***Output:***
--Diagram showing traffic flow
--Written notes explaining why traffic might fail
+***Tasks:***  
+-Learn Service types: ClusterIP, NodePort, LoadBalancer  
+-Understand: kube-proxy role and basic CNI concept  
+***Lab:***  
+-Expose your NGINX Deployment via ClusterIP → NodePort  
+-Test connectivity using curl inside cluster (kubectl exec)  
+-Try to break the service and debug  
+***Output:***  
+-Diagram showing traffic flow  
+-Written notes explaining why traffic might fail  
 
 # Tasks
 ## Learn Service Types: ClusterIP, NodePort, LoadBalancer
 
-**1. ClusterIp(Default):**  
+**1. ClusterIp(Default):** 
 - The service is only reachable from within the cluster.
 - Used for internal communication between your apps.
 
@@ -26,13 +26,13 @@
 - the production standard
 
 ## Understand Kube-Proxy  
-&nbsp;&nbsp;&nbsp;&nbsp; *How does traffic get from the Service IP to the Pod IP?*  
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; *How does traffic get from the Service IP to the Pod IP?*  
 - **kube-proxy** is a small process that runs on every single node and maintains the network rules on the host.
 - When you create a Service, `kube-proxy` sees the service and creates 'IP Tables' or 'IPVS' rules on the node's OS.
 - When traffic hits the Service IP, the Linux kernel (managed by kube-proxy) intercepts it, realizes it is a Kubernetes service, and redirects the packet to one of the Pod IPs.
 
 ## Understand CNI (Container Network Interface)
-&nbsp;&nbsp;&nbsp;&nbsp;*Kubernetes does not actually know how to create a network, the CNI plugin does that.*
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*Kubernetes does not actually know how to create a network, the CNI plugin does that.*
 - Every time a pod is created, the CNI is responible for assigning it an IP address and making sure it can talk to pods on other nodes. 
 - It ensures that every pod has a unique IP and can communicate with every other pod without using NAT
 - On Docker Desktop the CNI is built-in. In AWS you use the AWS VPC CNI, which gives the pods an IP address from your VPC's subnet.
@@ -62,7 +62,7 @@ spec:
       targetPort: 80 # The port the POD listens on
 ```
 
-Apply it: kubectl apply -f nginx-service.yaml
+Apply it: `kubectl apply -f nginx-service.yaml`
 
 Find the ClusterIP: `kubectl get svc`
 
@@ -77,15 +77,9 @@ nginx-internal-service   ClusterIP   10.107.135.76   <none>        80/TCP    9m3
 
 Get your pod names: `kubectl get pods`
 
-Exec into a pod:
+Exec into a pod: `kubectl exec -it <name-of-one-of-your-pods> -- //bin/sh`  
 
-*Bash*  
-`kubectl exec -it <name-of-one-of-your-pods> -- //bin/sh`  
-
-Inside the pod, try to reach the service:
-
-*Bash*  
-`curl nginx-internal-service`  
+Inside the pod, try to reach the service: `curl nginx-internal-service`  
 *Note: Kubernetes has built-in DNS, so you don't even need the IP address!*
 
 ```
@@ -125,7 +119,7 @@ Edit `nginx-service.yaml` and change `type: ClusterIP` to `type: NodePort`.
 
 Apply the change: `kubectl apply -f nginx-service.yaml`
 
-Find the port: `kubectl get svc`
+Find the port: `kubectl get svc`  
 *Look under PORT(S). You will see 80:XXXXX/TCP. That 5-digit number (usually 30000-32767) is your NodePort.*
 
 Test it: Open your browser to `http://localhost:<YOUR-NODEPORT>`.
@@ -146,7 +140,7 @@ Try to refresh your browser or curl the service from inside the pod. It will han
 Run this command to see if the Service actually "sees" your pods:
 
 *Bash*  
-`kubectl get endpoints nginx-internal-service`
+`kubectl get endpoints nginx-internal-service`  
 If it says `<none>:` Your selector is wrong. The Service is a front door with no hallway behind it.
 
 ```
@@ -163,7 +157,7 @@ If it lists IPs: The connection is healthy.
 
 ### Path of the Packet
 
-**Web Browser --> NodePort --> Kube-proxy --> Service --> Pod/Container**
+**Web Browser --> NodePort --> Kube-proxy --> Service --> Pod/Container**  
 *When we typed in `localhost:31234` the traffic went through this path:*  
 1. **Origin:** Your Web Browser (Windows).
 2. **The Entry (NodePort):** Hits the Docker Desktop VM on port `31234`.
@@ -173,7 +167,7 @@ If it lists IPs: The connection is healthy.
 
 ## Why Traffic Might Fail (Troubleshooting Notes)
 
-*you will use these three areas to diagnose `Connection Refused` or `Timeout` errors:*
+&nbsp;&nbsp;&nbsp;&nbsp; *You will use these three areas to diagnose `Connection Refused` or `Timeout` errors:*
 
 ### 1. Label Mismatch (Service-to-Pod Break)
 **The Symptom:** The Service exists, but `curl` or browser requests just hang.

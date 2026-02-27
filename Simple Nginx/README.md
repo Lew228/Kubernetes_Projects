@@ -208,7 +208,8 @@ You need to see the `"stdout"` of the container.
 - Because the process didn't print "I am crashing!" to the screen before it died, the Kubelet has nothing to report back to you.
 
 **How to make the failure "Talk"**
-- If you want to see how a real application error looks, let's change the command to something that actually complains. Update the YAML to this:
+&nbsp;&nbsp;&nbsp;&nbsp;*If you want to see how a real application error looks, let's change the command to something that actually complains.* 
+- Update the YAML to this:
 
 *YAML*  
 `command: ["/bin/sh", "-c", "echo 'Starting up...'; sleep 5; echo 'Something went wrong!'; ls /folder-that-does-not-exist"]`  
@@ -216,11 +217,12 @@ You need to see the `"stdout"` of the container.
 
 *Bash*  
 `kubectl replace --force -f nginx-pod.yaml`  
-Now check the logs:
+- Now check the logs:
 
-*Bash*
-kubectl logs my-nginx-pod
+*Bash*  
+`kubectl logs my-nginx-pod`  
+
 You should see your custom messages followed by a real error from the Linux system saying the directory doesn't exist.
-`Starting up...`
-`Something went wrong!`
-`ls: cannot access '/folder-that-does-not-exist': No such file or directory`
+`Starting up...`  
+`Something went wrong!`  
+`ls: cannot access '/folder-that-does-not-exist': No such file or directory`  
