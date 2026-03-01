@@ -3,7 +3,7 @@ kind: Deployment
 metadata:
   name: nginx-deployment
 spec:
-  replicas: 3 # The "Desired State"
+  replicas: 3
   selector:
     matchLabels:
       app: nginx
@@ -12,8 +12,28 @@ spec:
       labels:
         app: nginx
     spec:
+      # 1. Volumes are defined once at the Pod level
+      volumes:
+        - name: config-volume
+          configMap:
+            name: app-settings
       containers:
       - name: nginx-container
         image: nginx:latest
+        # 2. All container settings go here together
+        env:
+        - name: THEME_COLOR
+          valueFrom:
+            configMapKeyRef:
+              name: app-settings
+              key: APP_COLOR
+        - name: ACCESS_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: app-credentials
+              key: API_KEY
         ports:
         - containerPort: 80
+        volumeMounts:
+          - name: config-volume
+            mountPath: /etc/config

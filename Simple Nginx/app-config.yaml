@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: app-settings
+data:
+  APP_COLOR: "yellow"
+  UI_MESSAGE: "Welcome to the Lab Cluster"
